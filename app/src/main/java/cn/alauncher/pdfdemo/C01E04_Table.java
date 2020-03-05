@@ -389,18 +389,23 @@ public class C01E04_Table {
         android.util.Log.d("wlDebug", "bottomRow = " + bottomRow);
 
         table.addCell(getDataCell("外观检查一般I级\nAQL=0.15", bottomRow, 2, dataTitleColor));
-
         table.addCell(getDataCell(mTemplateBean.getAQLList().get(0), 1, 5, dataTitleColor));
         table.addCell(getDataCell("RoHS相关: ", bottomRow, 2, dataTitleColor));
         table.addCell(getDataCell(mTemplateBean.getRoHSList().get(0), 1, 5, dataTitleColor));
+        table.addCell(getDataCell("合格", 3, 2, dataTitleColor));
 
-        table.addCell(getDataCell("合格", bottomRow, 2, dataTitleColor));
-        for (int i = 1; i < bottomRow; i++) {
+        for (int i = 1; i < 4; i++) {
+            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
+            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
+        }
+
+        table.addCell(getDataCell("不合格", 2, 2, dataTitleColor));
+
+        for (int i = 4; i < bottomRow; i++) {
             table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
             table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
         }
         document.add(table);
-
         // 关闭文档
         document.close();
     }
