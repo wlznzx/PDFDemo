@@ -147,6 +147,11 @@ public class C01E04_Table {
     private static BaseColor dataLineTwoColor = new BaseColor(225, 240, 249);
 
     private static BaseColor dataOKColor = new BaseColor(0, 153, 102);
+
+    private static BaseColor bottomColor = new BaseColor(210, 234, 240);
+
+    private static BaseColor judgeColor = new BaseColor(244, 250, 251);
+
     //  0, 153, 102 合格
 
     private static ArrayList<String> signatureTitle = new ArrayList<String>();
@@ -185,7 +190,7 @@ public class C01E04_Table {
             mParameter2Beans.add(_bean);
         }
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             ResultBean3 _bean = new ResultBean3();
             _bean.setCodeID(1);
             _bean.setHandlerAccout("hhb");
@@ -214,7 +219,7 @@ public class C01E04_Table {
         RoHSList.add("本批确认");
         RoHSList.add("上回RoHS确认日");
         RoHSList.add("确认结果(RoHS检查数据以检查日期追溯)");
-        RoHSList.add("模号：");
+        RoHSList.add("模号:");
         mTemplateBean.setAQLList(AQLList);
         mTemplateBean.setRoHSList(RoHSList);
     }
@@ -388,22 +393,33 @@ public class C01E04_Table {
 
         android.util.Log.d("wlDebug", "bottomRow = " + bottomRow);
 
-        table.addCell(getDataCell("外观检查一般I级\nAQL=0.15", bottomRow, 2, dataTitleColor));
-        table.addCell(getDataCell(mTemplateBean.getAQLList().get(0), 1, 5, dataTitleColor));
-        table.addCell(getDataCell("RoHS相关: ", bottomRow, 2, dataTitleColor));
-        table.addCell(getDataCell(mTemplateBean.getRoHSList().get(0), 1, 5, dataTitleColor));
-        table.addCell(getDataCell("合格", 3, 2, dataTitleColor));
+        bottomRow = 6;
 
-        for (int i = 1; i < 4; i++) {
-            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
-            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
+        table.addCell(getBottomCell("外观检查一般I级\nAQL=0.15", bottomRow, 2, bottomColor));
+        table.addCell(getBottomCell(mTemplateBean.getAQLList().size() > 0 ? mTemplateBean.getAQLList().get(0) : " ", 1, 4, titleColor));
+        table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
+        table.addCell(getBottomCell("RoHS相关: ", bottomRow, 2, bottomColor));
+        table.addCell(getBottomCell(mTemplateBean.getRoHSList().size() > 0 ? mTemplateBean.getRoHSList().get(0) : " ", 1, 4, titleColor));
+        table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
+        table.addCell(getBottomCell("综合判断", bottomRow - 2, 2, titleColor));
+
+        for (int i = 1; i <= bottomRow - 2; i++) {
+            // android.util.Log.d("wlDebug", "i = " + i + " " + mTemplateBean.getAQLList().get(i));
+            android.util.Log.d("wlDebug", "i = " + i + " " + (mTemplateBean.getRoHSList().size() > i ? mTemplateBean.getRoHSList().get(i) : " "));
+            table.addCell(getBottomCell(mTemplateBean.getAQLList().size() > i ? mTemplateBean.getAQLList().get(i) : " ", 1, 4, titleColor));
+            table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
+            table.addCell(getBottomCell(mTemplateBean.getRoHSList().size() > i ? mTemplateBean.getRoHSList().get(i) : " ", 1, 4, titleColor));
+            table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
         }
 
-        table.addCell(getDataCell("不合格", 2, 2, dataTitleColor));
+        table.addCell(getBottomCell("不合格", 2, 2, judgeColor));
 
-        for (int i = 4; i < bottomRow; i++) {
-            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
-            table.addCell(getDataCell("记号", 1, 5, dataTitleColor));
+        for (int i = bottomRow - 1; i < bottomRow; i++) {
+            android.util.Log.d("wlDebug", "i = " + i + " " + (mTemplateBean.getRoHSList().size() > i ? mTemplateBean.getRoHSList().get(i) : " "));
+            table.addCell(getBottomCell(mTemplateBean.getAQLList().size() > i ? mTemplateBean.getAQLList().get(i) : " ", 1, 4, titleColor));
+            table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
+            table.addCell(getBottomCell(mTemplateBean.getRoHSList().size() > i ? mTemplateBean.getRoHSList().get(i) : " ", 1, 4, titleColor));
+            table.addCell(getBottomCell(" ", 1, 1, BaseColor.WHITE));
         }
         document.add(table);
         // 关闭文档
@@ -412,7 +428,7 @@ public class C01E04_Table {
 
 
     private static PdfPCell getTitleCell(String msg) {
-        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(8, BaseColor.BLACK)));
+        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(8,BaseColor.BLACK)));
         cell.setRowspan(1);
         cell.setColspan(2);
         // 设置距左边的距离
@@ -426,7 +442,7 @@ public class C01E04_Table {
     }
 
     private static PdfPCell getDataCell(String msg, int row, int col, BaseColor backgroundColor) {
-        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(6, BaseColor.WHITE)));
+        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(6,BaseColor.WHITE)));
         cell.setBorderColor(BaseColor.WHITE);
         cell.setBackgroundColor(backgroundColor);
         cell.setRowspan(row);
@@ -441,8 +457,10 @@ public class C01E04_Table {
         return cell;
     }
 
-    private static PdfPCell getDataCellNum(String msg, int row, int col) {
-        PdfPCell cell = new PdfPCell(new Paragraph(msg));
+    private static PdfPCell getBottomCell(String msg, int row, int col, BaseColor backgroundColor) {
+        PdfPCell cell = new PdfPCell(new Paragraph(msg, getBlackFont(4)));
+        cell.setBorderColor(BaseColor.BLACK);
+        cell.setBackgroundColor(backgroundColor);
         cell.setRowspan(row);
         cell.setColspan(col);
         // 设置距左边的距离
@@ -462,16 +480,33 @@ public class C01E04_Table {
             if (font == null) {
                 BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
                 font = new Font(bf, 8, Font.NORMAL);
-                font.setColor(BaseColor.BLACK);
+                font.setColor(BaseColor.WHITE);
             }
             font.setSize(size);
-            font.setColor(color);
         } catch (DocumentException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
         return font;
+    }
+
+    private static Font blackFont = null;
+
+    private static Font getBlackFont(int size) {
+        try {
+            if (blackFont == null) {
+                BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
+                blackFont = new Font(bf, size, Font.NORMAL);
+                blackFont.setColor(BaseColor.BLACK);
+            }
+            font.setSize(size);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return blackFont;
     }
 
     // 模板
