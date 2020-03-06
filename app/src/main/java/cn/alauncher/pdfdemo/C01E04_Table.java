@@ -148,9 +148,13 @@ public class C01E04_Table {
 
     private static BaseColor dataOKColor = new BaseColor(0, 153, 102);
 
+    private static BaseColor dataNGColor = new BaseColor(238, 64, 0);
+
     private static BaseColor bottomColor = new BaseColor(210, 234, 240);
 
     private static BaseColor judgeColor = new BaseColor(244, 250, 251);
+
+    private static BaseColor dataHeader = new BaseColor(158, 224, 219);
 
     //  0, 153, 102 合格
 
@@ -190,7 +194,7 @@ public class C01E04_Table {
             mParameter2Beans.add(_bean);
         }
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 6; i++) {
             ResultBean3 _bean = new ResultBean3();
             _bean.setCodeID(1);
             _bean.setHandlerAccout("hhb");
@@ -207,6 +211,19 @@ public class C01E04_Table {
             mResultBean3s.add(_bean);
         }
 
+        ArrayList<String> Titles = new ArrayList<>();
+        Titles.add("部品名称");
+        Titles.add("进货批量");
+        Titles.add("进货日期");
+        Titles.add("检查日期");
+        Titles.add("部品代号");
+        Titles.add("尺寸检查");
+        Titles.add("生产日期");
+        Titles.add("部品发送到");
+        Titles.add("材料名称");
+        Titles.add("订单No");
+        Titles.add("检查目的");
+        // Titles.add("供货方名称");
         ArrayList<String> AQLList = new ArrayList<>();
         AQLList.add("无毛刺、无异物、无气孔");
         AQLList.add("无收缩、无裂缝、无缺陷");
@@ -222,6 +239,7 @@ public class C01E04_Table {
         RoHSList.add("模号:");
         mTemplateBean.setAQLList(AQLList);
         mTemplateBean.setRoHSList(RoHSList);
+        mTemplateBean.setTitleList(Titles);
     }
 
     public static void createNTTable() throws IOException, DocumentException {
@@ -242,7 +260,7 @@ public class C01E04_Table {
         // 添加表格，4列
         PdfPTable table = new PdfPTable(16);
         // 构建每个单元格
-        PdfPCell cell1 = new PdfPCell(new Paragraph("Cell 1"));
+        PdfPCell cell1 = new PdfPCell(new Paragraph("量产受入品检查表E*W", font));
         // 边框颜色
         cell1.setBorderColor(BaseColor.BLACK);
         // 设置背景颜色
@@ -261,28 +279,21 @@ public class C01E04_Table {
         cell1.setVerticalAlignment(Element.ALIGN_MIDDLE);
         table.addCell(cell1);
 
-
         for (int i = 0; i < signatureTitle.size(); i++) {
-            PdfPCell cell = new PdfPCell(new Paragraph(signatureTitle.get(i), font));
-            cell.setRowspan(1);
-            cell.setColspan(2);
-            // 设置高度
+            PdfPCell cell = getTitleCell(signatureTitle.get(i), titleColor);
             cell.setFixedHeight(20);
             // 设置内容水平居中显示
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             // 设置垂直居中
             cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
             table.addCell(cell);
-            // table.addCell(cell);
         }
-        /*         */
+        // 绘制签名栏;
         for (int i = 0; i < signatureTitle.size(); i++) {
             PdfPCell cell = new PdfPCell(new Paragraph(" "));
             cell.setRowspan(1);
             cell.setColspan(2);
-            // 设置距左边的距离
             cell.setPaddingLeft(10);
-            // 设置高度
             // 设置内容水平居中显示
             cell.setHorizontalAlignment(Element.ALIGN_CENTER);
             // 设置垂直居中
@@ -290,14 +301,17 @@ public class C01E04_Table {
             table.addCell(cell);
         }
 
-        for (int i = 0; i < titles.size(); i++) {
-            table.addCell(getTitleCell(titles.get(i)));
-            table.addCell(getTitleCell(" "));
-        }
+        // 每行显示个数;
+        int colSize = 4;
+        int colTitleSize = (int) Math.ceil((double) mTemplateBean.getTitleList().size() / (double) colSize);
 
-        for (int i = 0; i < titles.size(); i++) {
-            table.addCell(getTitleCell(titles.get(i)));
-            table.addCell(getTitleCell(" "));
+        // 绘制标题栏;
+        for (int i = 0; i < colTitleSize; i++) {
+            for (int j = 0; j < colSize; j++) {
+                table.addCell(getTitleCell((i * 4 + j) <
+                        mTemplateBean.getTitleList().size() ? mTemplateBean.getTitleList().get(i * 4 + j) : "", titleColor));
+                table.addCell(getTitleCell(" ", BaseColor.WHITE));
+            }
         }
 
         Image cellIMG = Image.getInstance(FOX);
@@ -325,7 +339,39 @@ public class C01E04_Table {
         //页数
         int pageSum = (int) Math.ceil((double) mParameter2Beans.size() / (double) pageSize);
 
-        android.util.Log.d("wlDebug", "pageSum_ = " + pageSum);
+
+        // 计算数据的最大、最小、判定值;
+        ArrayList<Double> _maxs = new ArrayList<>();
+        ArrayList<Double> _mins = new ArrayList<>();
+        ArrayList<String> _results = new ArrayList<>();
+        for (int i = 0; i < mParameter2Beans.size(); i++) {
+            if (i >= mResultBean3s.get(0).getMValues().size()) {
+
+            } else {
+                Double _max = Double.valueOf(-100000);
+                Double _min = Double.valueOf(1000000);
+                String _result = "OK";
+                for (int j = 0; j < mResultBean3s.size(); j++) {
+                    ResultBean3 _bean = mResultBean3s.get(j);
+                    if (Double.valueOf(_bean.getMValues().get(i)) < _min) {
+                        _min = Double.valueOf(_bean.getMValues().get(i));
+                    }
+                    if (Double.valueOf(_bean.getMValues().get(i)) > _max) {
+                        _max = Double.valueOf(_bean.getMValues().get(i));
+                    }
+                    if (_bean.getResult().equals("NG")) {
+                        _result = "NG";
+                    }
+                }
+                _maxs.add(_max);
+                _mins.add(_min);
+                _results.add(_result);
+            }
+        }
+
+        android.util.Log.d("wlDebug", "_maxs = " + _maxs);
+        android.util.Log.d("wlDebug", "_mins = " + _mins);
+        android.util.Log.d("wlDebug", "_results = " + _results);
         for (int i = 0; i < pageSum; i++) {
             // i * 3 + 0 > mParameter2Beans.size() -1  ? String.valueOf(mParameter2Beans.get(i * 3 + 0).getIndex()) : " ";
 
@@ -373,7 +419,7 @@ public class C01E04_Table {
                 String path2 = i * 3 + 1 <= (mResultBean3s.get(j).getMPicPaths().size() - 1) ? mResultBean3s.get(j).getMPicPaths().get(i * 3 + 1) : " ";
                 String value3 = i * 3 + 2 <= (mResultBean3s.get(j).getMValues().size() - 1) ? mResultBean3s.get(j).getMValues().get(i * 3 + 2) : " ";
                 String path3 = i * 3 + 2 <= (mResultBean3s.get(j).getMPicPaths().size() - 1) ? mResultBean3s.get(j).getMPicPaths().get(i * 3 + 2) : " ";
-                table.addCell(getDataCell(String.valueOf((j + 1)), 1, 1, dataTitleColor));
+                table.addCell(getDataCell(String.valueOf((j + 1)), 1, 1, dataHeader));
                 table.addCell(getDataCell(value1, 1, 2, j % 2 == 1 ? dataLineOneColor : dataLineTwoColor));
                 table.addCell(getDataCell(path1, 1, 3, j % 2 == 1 ? dataLineOneColor : dataLineTwoColor));
                 table.addCell(getDataCell(value2, 1, 2, j % 2 == 1 ? dataLineOneColor : dataLineTwoColor));
@@ -383,10 +429,34 @@ public class C01E04_Table {
             }
 
             // 最大值；
+            table.addCell(getDataCell("最大值", 1, 1, dataTitleColor));
+            table.addCell(getDataCell(i * 3 + 0 < _maxs.size() ?
+                    String.valueOf(_maxs.get(i * 3 + 0)) : " ", 1, 5, dataLineOneColor));
+            table.addCell(getDataCell(i * 3 + 1 < _maxs.size() ?
+                    String.valueOf(_maxs.get(i * 3 + 1)) : " ", 1, 5, dataLineOneColor));
+            table.addCell(getDataCell(i * 3 + 2 < _maxs.size() ?
+                    String.valueOf(_maxs.get(i * 3 + 2)) : " ", 1, 5, dataLineOneColor));
 
             // 最小值；
+            table.addCell(getDataCell("最小值", 1, 1, dataTitleColor));
+            table.addCell(getDataCell(i * 3 + 0 < _mins.size() ?
+                    String.valueOf(_mins.get(i * 3 + 0)) : " ", 1, 5, dataLineOneColor));
+            table.addCell(getDataCell(i * 3 + 1 < _mins.size() ?
+                    String.valueOf(_mins.get(i * 3 + 1)) : " ", 1, 5, dataLineOneColor));
+            table.addCell(getDataCell(i * 3 + 2 < _mins.size() ?
+                    String.valueOf(_mins.get(i * 3 + 2)) : " ", 1, 5, dataLineOneColor));
 
             // 判定;
+            table.addCell(getDataCell("判定", 1, 1, dataTitleColor));
+            String judge1 = i * 3 + 0 < _results.size() ?
+                    String.valueOf(_results.get(i * 3 + 0)) : " ";
+            String judge2 = i * 3 + 1 < _results.size() ?
+                    String.valueOf(_results.get(i * 3 + 1)) : " ";
+            String judge3 = i * 3 + 2 < _results.size() ?
+                    String.valueOf(_results.get(i * 3 + 2)) : " ";
+            table.addCell(getDataCell(judge1, 1, 5, judge1.equals("OK") ? dataOKColor : dataNGColor));
+            table.addCell(getDataCell(judge2, 1, 5, judge2.equals("OK") ? dataOKColor : dataNGColor));
+            table.addCell(getDataCell(judge3, 1, 5, judge3.equals("OK") ? dataOKColor : dataNGColor));
         }
         // 底部 6 ，6 ，4；
         int bottomRow = Math.max(Math.max(mTemplateBean.getAQLList().size(), mTemplateBean.getRoHSList().size()), 5);
@@ -427,8 +497,9 @@ public class C01E04_Table {
     }
 
 
-    private static PdfPCell getTitleCell(String msg) {
-        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(8,BaseColor.BLACK)));
+    private static PdfPCell getTitleCell(String msg, BaseColor backgroundColor) {
+        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(8)));
+        cell.setBackgroundColor(backgroundColor);
         cell.setRowspan(1);
         cell.setColspan(2);
         // 设置距左边的距离
@@ -442,7 +513,7 @@ public class C01E04_Table {
     }
 
     private static PdfPCell getDataCell(String msg, int row, int col, BaseColor backgroundColor) {
-        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(6,BaseColor.WHITE)));
+        PdfPCell cell = new PdfPCell(new Paragraph(msg, getFont(6, BaseColor.WHITE)));
         cell.setBorderColor(BaseColor.WHITE);
         cell.setBackgroundColor(backgroundColor);
         cell.setRowspan(row);
@@ -471,6 +542,23 @@ public class C01E04_Table {
         // 设置垂直居中
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         return cell;
+    }
+
+    private static Font getFont(int size) {
+        Font _font = null;
+        try {
+            if (_font == null) {
+                BaseFont bf = BaseFont.createFont("STSong-Light", "UniGB-UCS2-H", BaseFont.NOT_EMBEDDED);
+                _font = new Font(bf, 8, Font.NORMAL);
+                _font.setColor(BaseColor.BLACK);
+            }
+            _font.setSize(size);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return _font;
     }
 
     private static Font font = null;
